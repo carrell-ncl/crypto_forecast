@@ -6,6 +6,7 @@ Created on Sun Feb 28 11:24:52 2021
 """
 
 from datetime import datetime
+from time import gmtime, strftime 
 from sklearn import preprocessing
 import numpy as np
 from tensorflow.keras.models import Sequential
@@ -15,6 +16,7 @@ from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.callbacks import Callback
 import warnings
 
+#Modify callback so we can stop training when the validation reaches a threshold
 class EarlyStoppingByLossVal(Callback):
     def __init__(self, monitor='val_loss', value=0.00001, verbose=0):
         super(Callback, self).__init__()
@@ -36,7 +38,7 @@ callbacks = [
     EarlyStoppingByLossVal(monitor='val_loss', value=0.008, verbose=1)
 ]
 
-def get_forcast (train_df, test_df, val_df, coin):
+def train_model (train_df, test_df, val_df, coin):
     min_max_scaler = preprocessing.MinMaxScaler()
     training_set_scaled = min_max_scaler.fit_transform(train_df)
     testing_set_scaled = min_max_scaler.fit_transform(val_df)
@@ -81,8 +83,13 @@ def get_forcast (train_df, test_df, val_df, coin):
     
     history = model.fit(x_train, y_train, epochs = 300, batch_size=32, validation_data=(x_val, y_val), callbacks=callbacks)
     
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    model.save_weights(f'{coin}weights{dt_string}.h5')
+    now = str(strftime("%d""%m""%H""%M", gmtime()))
+    model.save_weights(f'{coin}weights{now}.h5')
     
     return model, history
+
+
+
+
+
+
