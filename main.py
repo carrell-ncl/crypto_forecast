@@ -12,11 +12,13 @@ os.getcwd()
 
 from crypto_getprices import get_crypto_data
 from processing import get_train_test_val_df
+from train_model import train_model
+from get_forcasts import get_forcast
 
+btc = get_crypto_data('BTC', 500)  
 
+train, test, val = get_train_test_val_df(btc)
 
-ada = get_crypto_data('ADA', 500)  
+my_model , history = train_model(train, test, val, 'BTC')
 
-train, test, val = get_train_test_val_df(ada)
-
-
+get_forcast(train, test, my_model, 30, 'BTC')
