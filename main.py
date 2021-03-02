@@ -10,15 +10,30 @@ import os
 os.chdir(r'C:\Users\Steve\Desktop\crypto_forecast')
 os.getcwd()
 
-from crypto_getprices import get_crypto_data
+from crypto_getprices import get_daily_data, get_hourly_data
 from processing import get_train_test_val_df
-from train_model import train_model
+from train_model import train_model, load_trained_model
 from get_forcasts import get_forcast
+import seaborn as sns
 
-btc = get_crypto_data('BTC', 500)  
+
+btc = get_daily_data('BTC', 300)  
 
 train, test, val = get_train_test_val_df(btc)
 
 my_model , history = train_model(train, test, val, 'BTC')
-
+print(history.history['loss'][-1])
 get_forcast(train, test, my_model, 30, 'BTC')
+
+
+ada = get_daily_data('ADA', 200)  
+
+train, test, val = get_train_test_val_df(ada)
+
+my_model , history = train_model(train, test, val, 'ADA')
+print(history.history['loss'][-1])
+get_forcast(train, test, my_model, 30, 'ADA')
+
+
+
+

@@ -10,11 +10,12 @@ from time import gmtime, strftime
 from sklearn import preprocessing
 import numpy as np
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Dropout
+from tensorflow.keras.layers import Dense, LSTM, Dropout, GRU
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.optimizers import SGD, Adam
 from tensorflow.keras.callbacks import Callback
 import warnings
+import os
 
 #Modify callback so we can stop training when the validation reaches a threshold
 class EarlyStoppingByLossVal(Callback):
@@ -35,7 +36,7 @@ class EarlyStoppingByLossVal(Callback):
             self.model.stop_training = True
             
 callbacks = [
-    EarlyStoppingByLossVal(monitor='val_loss', value=0.008, verbose=1)
+    EarlyStoppingByLossVal(monitor='loss', value=0.0015, verbose=1)
 ]
 
 def train_model (train_df, test_df, val_df, coin):
@@ -68,28 +69,48 @@ def train_model (train_df, test_df, val_df, coin):
     model = Sequential()
     
     model.add(LSTM(units = 50, return_sequences=True, input_shape = (x_train.shape[1],1)))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(LSTM(units = 50, return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(LSTM(units = 50, return_sequences=True))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(LSTM(units = 50))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(Dense(units=1))
     
     model.compile(optimizer=Adam(lr=0.001), loss='mean_squared_error')
     #Set early stoppage when validation loss stops decreasing for 5 epochs
-    #es = EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=10) 
+    es = EarlyStopping(monitor='loss', mode='min', verbose=1, patience=70) 
     
-    history = model.fit(x_train, y_train, epochs = 300, batch_size=32, validation_data=(x_val, y_val), callbacks=callbacks)
+    history = model.fit(x_train, y_train, epochs = 500, batch_size=32, validation_data=(x_val, y_val), callbacks=es)
     
+    #Check to see if weights folder exists, if not, create new
+    if not os.path.isdir('./weights'):
+        os.makedirs('./weights')
+
+  
     now = str(strftime("%d""%m""%H""%M", gmtime()))
-    model.save_weights(f'{coin}weights{now}.h5')
+    model.save_weights(f'./weights/{coin}weights{now}.h5')
     
     return model, history
 
+#Load weights of best model if required
+def load_trained_model(weights):
+     #Initialisze
+    model = Sequential()
+    
+    model.add(LSTM(units = 50, return_sequences=True, input_shape = (60, 1)))
+    model.add(Dropout(0.3))
+    model.add(LSTM(units = 50, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(LSTM(units = 50, return_sequences=True))
+    model.add(Dropout(0.3))
+    model.add(LSTM(units = 50))
+    model.add(Dropout(0.3))
+    model.add(Dense(units=1))
+    
+    model.compile(optimizer=Adam(lr=0.001), loss='mean_squared_error')
 
-
-
-
-
+    model.load_weights(weights) 
+    
+    return model
